@@ -24,8 +24,8 @@ class RAGSystem:
         self.model = model
 
         # 配置 OpenAI API 客户端的 ，，密钥与base_url
-        openai.api_key = self.openai_api_key
-        openai.api_base = self.base_url
+        OpenAI.api_key = self.openai_api_key
+        OpenAI.api_base = self.base_url
 
     def get_embeddings(self, texts = None):
         """
@@ -52,8 +52,7 @@ class RAGSystem:
         if texts is None:
             texts = self.texts
 
-            # 使用 OpenAI 客户端调用 API 来获取嵌入向量
-        client = OpenAI(api_key=self.openai_api_key)  # 初始化客户端
+        client = OpenAI()
         response = client.embeddings.create(
             input=texts,
             model=self.model
