@@ -51,12 +51,16 @@ class RAGSystem:
         """
         if texts is None:
             texts = self.texts
-        response = openai.embeddings.create(
+
+            # 使用 OpenAI 客户端调用 API 来获取嵌入向量
+        client = OpenAI(api_key=self.openai_api_key)  # 初始化客户端
+        response = client.embeddings.create(
             input=texts,
             model=self.model
         )
-        embeddings = np.array([item.embedding for item in response.data])
 
+        # 提取并返回嵌入向量
+        embeddings = np.array([item.embedding for item in response.data])
         return embeddings
 
 
