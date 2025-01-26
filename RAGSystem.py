@@ -23,10 +23,6 @@ class RAGSystem:
         self.chat_history = chat_history
         self.model = model
 
-        # 配置 OpenAI API 客户端的 ，，密钥与base_url
-        OpenAI.api_key = self.openai_api_key
-        OpenAI.api_base = self.base_url
-
     def get_embeddings(self, texts = None):
         """
         使用 OpenAI API 获取文本的嵌入向量。
@@ -51,8 +47,8 @@ class RAGSystem:
         """
         if texts is None:
             texts = self.texts
-
-        client = OpenAI()
+        client = OpenAI(api_key=self.openai_api_key,
+                        base_url=self.base_url)
         response = client.embeddings.create(
             input=texts,
             model=self.model
@@ -110,7 +106,8 @@ class RAGSystem:
 
         try:
             # 调用 OpenAI Chat API 生成答案
-            client = OpenAI()
+            client = OpenAI(api_key= self.openai_api_key,
+                base_url = self.base_url)
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
