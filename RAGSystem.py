@@ -20,29 +20,36 @@ class RAGSystem:
         self.question = question
         self.chat_history = chat_history
 
-    def get_embeddings(self, texts = None):
+    def get_embeddings(self, texts=None, batch_size=20):
         """
         使用 OpenAI API 获取文本的嵌入向量。
 
         参数：
             texts (list): 文本块列表，每个元素是一个字符串（换句话说，是文档片段）。
+            batch_size (int): 每次请求的文本数量，不超过 20。
 
         返回：
             embeddings (np.array): 返回一个二维数组，数组每一行都是一个嵌入向量
         """
-
         if texts is None:
             texts = self.texts
-        client = OpenAI(api_key=self.qwen_api_key,
-                        base_url=self.base_url)
-        response = client.embeddings.create(
-            input=texts,
-            model="text-embedding-v3"
-        )
 
-        # 提取并返回嵌入向量
-        embeddings = np.array([item.embedding for item in response.data])
-        return embeddings
+        client = OpenAI(api_key=self.qwen_api_key, base_url=self.base_url)
+        all_embeddings = []
+
+        # 分批处理文本
+        for i in range(0, len(texts), batch_size):
+            batch_texts = texts[i:i + batch_size]
+            response = client.embeddings.create(
+                input=batch_texts,
+                model="text-embedding-v3"
+            )
+
+            # 提取并保存嵌入向量
+            embeddings = np.array([item.embedding for item in response.data])
+            all_embeddings.extend(embeddings)
+
+        return np.array(all_embeddings)
 
 
     def retrieve(self, index, k=3):
