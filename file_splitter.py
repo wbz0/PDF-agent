@@ -1,4 +1,3 @@
-import re
 
 def split_documents(docs, chunk_size=1000, chunk_overlap=50, separators=None):
     """

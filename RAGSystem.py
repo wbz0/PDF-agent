@@ -1,27 +1,24 @@
-import openai
 from openai import OpenAI
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
 class RAGSystem:
-    def __init__(self, openai_api_key, base_url, texts, question, chat_history, model="text-embedding-ada-002"):
+    def __init__(self, qwen_api_key, base_url, texts, question, chat_history):
         """
         初始化 RAG 系统。
 
         参数：
-            openai_api_key (str): OpenAI API 密钥。
-            base_url (str): OpenAI API 的基本 URL（如果是中转站购买的 API，用户需要提供）。
+            openai_api_key (str): 通义千问 API 密钥。
+            base_url (str): 通义千问 API 的基本 URL。
             texts (list): 文本块列表，每个元素是一个字符串（文档片段）。
             question (str): 用户的问题。
             chat_history (list): 会话历史记录。
-            model (str): 使用的嵌入模型，默认为 "text-embedding-ada-002"。
         """
-        self.openai_api_key = openai_api_key
+        self.qwen_api_key = qwen_api_key
         self.base_url = base_url  # 新增 base_url 参数
         self.texts = texts
         self.question = question
         self.chat_history = chat_history
-        self.model = model
 
     def get_embeddings(self, texts = None):
         """
@@ -34,24 +31,13 @@ class RAGSystem:
             embeddings (np.array): 返回一个二维数组，数组每一行都是一个嵌入向量
         """
 
-        #补充说明：调用 OpenAI API 批量生成嵌入向量
-        """response 是一个字典，常见结构为：
-        {
-        "data": [
-            {"embedding": [...], "index": 0},
-            {"embedding": [...], "index": 1}
-        ],
-        "model": "text-embedding-ada-002",
-        ...
-        }
-        """
         if texts is None:
             texts = self.texts
-        client = OpenAI(api_key=self.openai_api_key,
+        client = OpenAI(api_key=self.qwen_api_key,
                         base_url=self.base_url)
         response = client.embeddings.create(
             input=texts,
-            model=self.model
+            model="text-embedding-v3"
         )
 
         # 提取并返回嵌入向量
@@ -72,7 +58,7 @@ class RAGSystem:
         返回：
             retrieved_docs (list): 返回最相似的 k 个文档。
         """
-        # 使用 OpenAI API 获取问题的嵌入向量
+        # 使用 OpenAI 兼容 API 获取问题的嵌入向量
         question_embedding = self.get_embeddings([self.question])[0]
 
         # 计算问题嵌入与文档嵌入的相似度
@@ -85,7 +71,7 @@ class RAGSystem:
 
     def generate_answer(self, retrieved_docs):
         """
-        使用 OpenAI API 生成答案。
+        使用 OpenAI 兼容 API 生成答案。
 
         参数：
             question (str): 用户提问。
@@ -105,16 +91,16 @@ class RAGSystem:
             prompt = f"会话历史:{history_context}\n\n{prompt}"
 
         try:
-            # 调用 OpenAI Chat API 生成答案
-            client = OpenAI(api_key= self.openai_api_key,
+            # 调用 OpenAI 兼容 API 生成答案
+            client = OpenAI(api_key= self.qwen_api_key,
                 base_url = self.base_url)
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="qwen-plus",
                 messages=[
                     {"role": "system", "content": "You are a helpful assistant."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=150
+                max_tokens=8192
             )
             if response:
                 return {"answer": response.choices[0].message.content.strip()}
