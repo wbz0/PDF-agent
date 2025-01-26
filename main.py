@@ -1,12 +1,15 @@
 import streamlit as st
 from utils import qa_agent  # 使用封装好的模块函数
 
+
 # 页面标题
 st.title("📑 wbz的PDF助手")
 
-# 侧边栏：输入 OpenAI API 密钥
+# 侧边栏：输入 OpenAI API 密钥和 Base URL
 with st.sidebar:
     openai_api_key = st.text_input("请输入 OpenAI API 密钥：", type = "password")
+    base_url = st.text_input("请输入 API 基本 URL（仅在使用中转站购买API时输入，如果您是在官网购买的API，保留默认文本即可）：",
+                             value="https://api.openai.com/v1")
     st.markdown("[获取 OpenAI API 密钥](https://platform.openai.com/account/api-keys)")
 
 # 初始化会话历史
@@ -21,19 +24,17 @@ question = st.text_input("对 PDF 的内容进行提问", disabled=not uploaded_
 if uploaded_file and question and not openai_api_key:
     st.info("请输入你的 OpenAI API 密钥")
 
-
 # AI 问答逻辑
 if uploaded_file and question and openai_api_key:
     with st.spinner("AI 正在思考中，请稍等..."):
 
-
-
         # 调用 utils.py 中的封装函数
         response = qa_agent(
-            openai_api_key = openai_api_key,
-            uploaded_file = uploaded_file,
-            chat_history = st.session_state["chat_history"],  # 会话历史
-            question = question,
+            openai_api_key=openai_api_key,
+            base_url=base_url,  # 传递 base_url
+            uploaded_file=uploaded_file,
+            chat_history=st.session_state["chat_history"],  # 会话历史
+            question=question,
         )
 
         # 显示答案

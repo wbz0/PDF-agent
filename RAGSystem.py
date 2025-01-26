@@ -1,37 +1,44 @@
 import openai
 from openai import OpenAI
 import numpy as np
-
-
 from sklearn.metrics.pairwise import cosine_similarity
 
 class RAGSystem:
-    def __init__(self, openai_api_key, texts, question, chat_history, model="text-embedding-ada-002"):
+    def __init__(self, openai_api_key, base_url, texts, question, chat_history, model="text-embedding-ada-002"):
         """
         初始化 RAG 系统。
 
         参数：
             openai_api_key (str): OpenAI API 密钥。
+            base_url (str): OpenAI API 的基本 URL（如果是中转站购买的 API，用户需要提供）。
+            texts (list): 文本块列表，每个元素是一个字符串（文档片段）。
+            question (str): 用户的问题。
+            chat_history (list): 会话历史记录。
             model (str): 使用的嵌入模型，默认为 "text-embedding-ada-002"。
         """
         self.openai_api_key = openai_api_key
+        self.base_url = base_url  # 新增 base_url 参数
         self.texts = texts
         self.question = question
         self.chat_history = chat_history
         self.model = model
+
+        # 配置 OpenAI API 客户端的 ，，密钥与base_url
+        openai.api_key = self.openai_api_key
+        openai.api_base = self.base_url
 
     def get_embeddings(self, texts = None):
         """
         使用 OpenAI API 获取文本的嵌入向量。
 
         参数：
-            texts (list): 文本块列表，每个元素是一个字符串（文档片段）。
+            texts (list): 文本块列表，每个元素是一个字符串（换句话说，是文档片段）。
 
         返回：
             embeddings (np.array): 返回一个二维数组，数组每一行都是一个嵌入向量
         """
 
-        #调用 OpenAI API 批量生成嵌入向量
+        #补充说明：调用 OpenAI API 批量生成嵌入向量
         """response 是一个字典，常见结构为：
         {
         "data": [
@@ -100,7 +107,7 @@ class RAGSystem:
 
         try:
             # 调用 OpenAI Chat API 生成答案
-            client = OpenAI(api_key=self.openai_api_key)
+            client = OpenAI()
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
