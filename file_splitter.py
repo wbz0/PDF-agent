@@ -1,6 +1,4 @@
-import re
-
-def split_documents(docs, chunk_size=1000, chunk_overlap=50, separators=None):
+def split_documents(docs):
     """
     按指定规则将文档内容切分为较小的文本块。
 
@@ -13,12 +11,15 @@ def split_documents(docs, chunk_size=1000, chunk_overlap=50, separators=None):
     返回：
         texts (list): 切分后的文本块列表。
     """
-    if separators is None:
-        separators = ["\n", "。", "！", "？", "，", "、", " "]
+    chunk_size = 1000
+    chunk_overlap = 50
+    separators = ["\n", "。", "！", "？", "，", "、", " "]
 
     texts = []  # 存储分割后的文本块
 
+    # 开始处理每个文档
     for doc in docs:
+
         # 按优先级从大到小依次尝试分割
         for sep in separators:
             if sep in doc:
