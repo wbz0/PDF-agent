@@ -1,5 +1,5 @@
 import streamlit as st
-from integ import qa_agent  # 封装的问答函数
+from utils import qa_agent  # 封装的问答函数
 import re
 from streamlit import session_state
 from openai import OpenAI
@@ -51,7 +51,7 @@ with st.sidebar:
         st.error(st.session_state.api_error)
 
     st.markdown("[获取 Deepseek API key](https://cloud.siliconflow.cn/models)")
-    st.write("###### 本模型基于 Deepseek-V3 大模型生成")
+    st.write("###### 本模型基于 Deepseek-R1 大模型生成")
 
 if "chat_history" not in session_state:
     chat_history = []
@@ -63,10 +63,29 @@ uploaded_file = st.file_uploader("上传你的 PDF 文件：", type="pdf", disab
 question = st.text_input("对 PDF 的内容进行提问", disabled=not uploaded_file)
 
 
+def convert_latex_format(text):
+    """ 将 LaTeX 公式格式转换为 Streamlit 兼容的格式，并修正特殊符号 """
+    # 替换块级公式
+    text = re.sub(r"\\\[(.*?)\\\]", r"$$\1$$", text, flags=re.DOTALL)
+    # 替换行内公式
+    text = re.sub(r"\\\((.*?)\\\)", r"$\1$", text)
+
+    # 替换数学符号
+    replacements = {
+        "∫": r"\int",
+        "Ω": r"\Omega",
+        "μ": r"\mu",
+        "×": r"\times"
+    }
+    for k, v in replacements.items():
+        text = text.replace(k, v)
+
+    return text
+
+
 # AI 问答逻辑
 if uploaded_file and question:
     with st.spinner("AI 正在思考中，请稍等..."):
-
         # 调用 utils.py 中的封装函数
         response = qa_agent(
             deepseek_api_key=deepseek_api_key,
@@ -75,15 +94,19 @@ if uploaded_file and question:
             chat_history=st.session_state["chat_history"],  # 会话历史
             question=question,
         )
-        def convert_latex_format(text):
-            """ 将 LaTeX 公式格式转换为 Streamlit 兼容的格式 """
-            text = re.sub(r"\\\[(.*?)\\\]", r"$$\1$$", text, flags=re.DOTALL)  # 块级公式
-            text = re.sub(r"\\\((.*?)\\\)", r"$\1$", text)  # 行内公式
-            return text
+
+        # 转换 LaTeX 公式格式
         formatted_answer = convert_latex_format(response)
+
         # 显示答案
         st.write("### 答案")
-        st.markdown(formatted_answer) # 展示 AI 的回答
+
+        # 分行处理 LaTeX 公式，确保复杂公式正确显示
+        for line in formatted_answer.split("\n"):
+            if line.startswith("$$") and line.endswith("$$"):  # 识别块级公式
+                st.latex(line.strip("$$"))
+            else:
+                st.markdown(line, unsafe_allow_html=True)
 
         # 更新会话历史
         st.session_state["chat_history"].append({"role": "user", "content": question})
